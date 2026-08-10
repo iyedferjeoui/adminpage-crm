@@ -47,4 +47,9 @@ class LeadResource extends Resource
             'edit' => EditLead::route('/{record}/edit'),
         ];
     }
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['title', 'status'];
+    }
 }
