@@ -1,0 +1,72 @@
+{
+  "name": "iyed workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bde404bf-2159-4945-8a45-0517da86d417",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "d6dd8c59-b9f8-4683-95e1-3c56af1327d1",
+      "name": "Webhook",
+      "webhookId": "bde404bf-2159-4945-8a45-0517da86d417"
+    },
+    {
+      "parameters": {
+        "sendTo": "iyedferjeoui4@gmail.com",
+        "subject": "=Project completed: {{ $json.body.name }}",
+        "emailType": "text",
+        "message": "=A project just marked as completed.  Name: {{ $json.body.name }} Status: {{ $json.body.status }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "68e7d17e-ac1c-490f-b49e-06f856e5d5cc",
+      "name": "Send a message",
+      "webhookId": "0874abfc-a664-467d-8ec2-c962e8fe7c60",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9NLcVHKd4PcHueQa",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "caf3276f-62da-41f5-b0a7-0534ba40977e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "161e7c8ad82b7e9dadac1708bfa6e02b2d9266cbf17d61ef7690ddac403ed5e5"
+  },
+  "id": "Fkrk0mdj0SIRZ9j8",
+  "tags": []
+}

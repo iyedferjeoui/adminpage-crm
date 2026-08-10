@@ -1,0 +1,35 @@
+{
+  "name": "n8n-nodes-tuintek-crm",
+  "version": "1.0.3",
+  "description": "n8n community node for Tuintek CRM, create and manage leads, contacts, and projects",
+  "keywords": [
+    "n8n-community-node-package"
+  ],
+  "license": "MIT",
+  "author": {
+    "name": "Iyed Ferjeoui"
+  },
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "files": [
+    "dist"
+  ],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [
+      "dist/credentials/TuintekCrmApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/TuintekCrm/TuintekCrm.node.js"
+    ]
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
+  },
+  "dependencies": {
+    "n8n-workflow": "^1.0.0"
+  }
+}
