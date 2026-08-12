@@ -14,12 +14,13 @@ export class TuintekCrm implements INodeType {
 		group: ['transform'],
 		version: 1,
 		subtitle: '={{$parameter["operation"]}}',
-		description: 'Create and update leads and contacts in Tuintek CRM',
+		description: 'Manage Tuintek CRM records. Use Create Contact for a new person or company you have not seen before. Use Create Lead when an existing contact expresses interest in something (a request, question, or potential sale) — requires an existing Contact ID. Use Update Lead Status to move a lead through its pipeline (new, contacted, qualified, converted, lost). Use Create Project when a lead has been converted into confirmed work — requires an existing Lead ID and Contact ID. Use Update Project Status to change a project\'s stage (planning, active, completed, cancelled). Use Update Contact to change an existing contact\'s type (customer vs prospect).',
 		defaults: {
 			name: 'Tuintek CRM',
 		},
 		inputs: ['main'],
 		outputs: ['main'],
+		usableAsTool: true,
 		credentials: [
 			{
 				name: 'tuintekCrmApi',
@@ -32,14 +33,15 @@ export class TuintekCrm implements INodeType {
 				name: 'operation',
 				type: 'options',
 				noDataExpression: true,
+				description: 'Choose what action to perform in the CRM',
 				options: [
-					{ name: 'Create Lead', value: 'createLead' },
-					{ name: 'Update Lead Status', value: 'updateLeadStatus' },
-					{ name: 'Create Contact', value: 'createContact' },
-					{ name: 'Update Contact', value: 'updateContact' },
-					{ name: 'Create Project', value: 'createProject' },
-					{ name: 'Update Project Status', value: 'updateProjectStatus' },
-					{ name: 'Debug Credentials', value: 'debugCredentials' },
+					{ name: 'Create Lead', value: 'createLead', description: 'Create a new sales lead linked to an existing contact' },
+					{ name: 'Update Lead Status', value: 'updateLeadStatus', description: 'Change the status of an existing lead' },
+					{ name: 'Create Contact', value: 'createContact', description: 'Create a new contact (person or company)' },
+					{ name: 'Update Contact', value: 'updateContact', description: "Update an existing contact's type" },
+					{ name: 'Create Project', value: 'createProject', description: 'Create a new project linked to a lead and contact' },
+					{ name: 'Update Project Status', value: 'updateProjectStatus', description: 'Change the status of an existing project' },
+					{ name: 'Debug Credentials', value: 'debugCredentials', description: 'Test that the API credentials work' },
 				],
 				default: 'createLead',
 			},
@@ -49,6 +51,7 @@ export class TuintekCrm implements INodeType {
 				type: 'number',
 				default: 0,
 				required: true,
+				description: 'The ID of the existing contact this lead belongs to',
 				displayOptions: { show: { operation: ['createLead'] } },
 			},
 			{
@@ -57,6 +60,7 @@ export class TuintekCrm implements INodeType {
 				type: 'string',
 				default: '',
 				required: true,
+				description: 'Short title describing what the lead is about (e.g. what the person is asking for)',
 				displayOptions: { show: { operation: ['createLead'] } },
 			},
 			{
@@ -65,12 +69,14 @@ export class TuintekCrm implements INodeType {
 				type: 'number',
 				default: 0,
 				required: true,
+				description: 'The ID of the lead to update',
 				displayOptions: { show: { operation: ['updateLeadStatus'] } },
 			},
 			{
 				displayName: 'Status',
 				name: 'status',
 				type: 'options',
+				description: 'New status to set on the lead',
 				options: [
 					{ name: 'New', value: 'new' },
 					{ name: 'Contacted', value: 'contacted' },
@@ -87,6 +93,7 @@ export class TuintekCrm implements INodeType {
 				type: 'string',
 				default: '',
 				required: true,
+				description: "The contact's first name",
 				displayOptions: { show: { operation: ['createContact'] } },
 			},
 			{
@@ -95,6 +102,7 @@ export class TuintekCrm implements INodeType {
 				type: 'string',
 				default: '',
 				required: true,
+				description: "The contact's last name",
 				displayOptions: { show: { operation: ['createContact'] } },
 			},
 			{
@@ -102,12 +110,14 @@ export class TuintekCrm implements INodeType {
 				name: 'email',
 				type: 'string',
 				default: '',
+				description: "The contact's email address",
 				displayOptions: { show: { operation: ['createContact'] } },
 			},
 			{
 				displayName: 'Contact Type',
 				name: 'contactType',
 				type: 'options',
+				description: 'Whether this contact is an existing customer or a new prospect',
 				options: [
 					{ name: 'Customer', value: 'customer' },
 					{ name: 'Prospect', value: 'prospect' },
@@ -120,6 +130,7 @@ export class TuintekCrm implements INodeType {
 				name: 'phone',
 				type: 'string',
 				default: '',
+				description: "The contact's phone number, if known",
 				displayOptions: { show: { operation: ['createContact'] } },
 			},
 			{
@@ -127,6 +138,7 @@ export class TuintekCrm implements INodeType {
 				name: 'company',
 				type: 'string',
 				default: '',
+				description: "The contact's company name, if known",
 				displayOptions: { show: { operation: ['createContact'] } },
 			},
 			{
@@ -134,6 +146,7 @@ export class TuintekCrm implements INodeType {
 				name: 'ownerId',
 				type: 'number',
 				default: 0,
+				description: 'ID of the user who should own this contact, if known',
 				displayOptions: { show: { operation: ['createContact'] } },
 			},
 			{
@@ -142,12 +155,14 @@ export class TuintekCrm implements INodeType {
 				type: 'number',
 				default: 0,
 				required: true,
+				description: 'The ID of the contact to update',
 				displayOptions: { show: { operation: ['updateContact'] } },
 			},
 			{
 				displayName: 'New Type',
 				name: 'newContactType',
 				type: 'options',
+				description: 'New type to set on the contact',
 				options: [
 					{ name: 'Customer', value: 'customer' },
 					{ name: 'Prospect', value: 'prospect' },
@@ -161,6 +176,7 @@ export class TuintekCrm implements INodeType {
 				type: 'number',
 				default: 0,
 				required: true,
+				description: 'The ID of the lead this project originated from',
 				displayOptions: { show: { operation: ['createProject'] } },
 			},
 			{
@@ -169,6 +185,7 @@ export class TuintekCrm implements INodeType {
 				type: 'number',
 				default: 0,
 				required: true,
+				description: 'The ID of the contact this project belongs to',
 				displayOptions: { show: { operation: ['createProject'] } },
 			},
 			{
@@ -177,6 +194,7 @@ export class TuintekCrm implements INodeType {
 				type: 'string',
 				default: '',
 				required: true,
+				description: 'Name of the project',
 				displayOptions: { show: { operation: ['createProject'] } },
 			},
 			{
@@ -184,6 +202,7 @@ export class TuintekCrm implements INodeType {
 				name: 'projectOwnerId',
 				type: 'number',
 				default: 0,
+				description: 'ID of the user who should own this project, if known',
 				displayOptions: { show: { operation: ['createProject'] } },
 			},
 			{
@@ -192,12 +211,14 @@ export class TuintekCrm implements INodeType {
 				type: 'number',
 				default: 0,
 				required: true,
+				description: 'The ID of the project to update',
 				displayOptions: { show: { operation: ['updateProjectStatus'] } },
 			},
 			{
 				displayName: 'Status',
 				name: 'projectStatus',
 				type: 'options',
+				description: 'New status to set on the project',
 				options: [
 					{ name: 'Planning', value: 'planning' },
 					{ name: 'Active', value: 'active' },
