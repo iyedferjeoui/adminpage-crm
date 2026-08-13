@@ -11,14 +11,14 @@
           ]
         },
         "filters": {
-          "q": "subject:\"New user\""
+          "q": "subject:\"tuintek\""
         }
       },
       "type": "n8n-nodes-base.gmailTrigger",
       "typeVersion": 1.3,
       "position": [
-        -192,
-        -144
+        -176,
+        -128
       ],
       "id": "00d9980c-440a-441d-b54b-f10380047f45",
       "name": "Gmail Trigger",
@@ -32,8 +32,10 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=Extract the following information from this email and respond with ONLY valid JSON, no other text, no markdown formatting, no code blocks:\n\n{\n  \"first_name\": \"the sender's first name\",\n  \"last_name\": \"the sender's last name\",\n  \"email\": \"the sender's email address\",\n  \"company\": \"company name if mentioned, otherwise null\",\n  \"lead_title\": \"a short 5-8 word summary of what they want\"\n}\n\nEmail subject: {{ $json.snippet }}\nEmail from: {{ $json.payload.headers }}",
-        "options": {}
+        "text": "={{ $json.snippet }}",
+        "options": {
+          "systemMessage": "=# Role\nYou are the email-intake assistant for Tuintek CRM. You read one incoming email at a time, decide what kind of message it is, take the correct CRM action using your tool when appropriate, and report a single clean decision that a downstream system will route on.\n\n# Available CRM fields\nContact: first_name, last_name, email, phone, company, type (customer | prospect), owner_id\nLead: contact_id, title, status (new | contacted | qualified | converted | lost), assigned_to, value\nProject: lead_id, contact_id, name, status (planning | active | completed | cancelled), owner_id\n\n# Available tool operations\n- Create Contact — create a new contact (person or company). Use when the sender is not already known.\n- Update Contact — update an existing contact's type (customer or prospect). Use only when you're certain of the contact_id.\n- Create Lead — create a new sales lead linked to an existing contact. Requires a valid contact_id.\n- Update Lead Status — change the status of an existing lead. Requires a valid lead_id.\n- Create Project — create a new project linked to a lead and a contact. Requires a valid lead_id and contact_id. Only use if the email explicitly confirms project-level work has been agreed.\n- Update Project Status — change the status of an existing project. Requires a valid project_id.\n\n# Step 1 — Read and classify\nRead the email fully, then classify it into exactly one decision:\n- new_lead — a new person is asking about a product, service, quote, or wants to start something, and you have no record of them.\n- existing_customer — the email is clearly from someone already known to Tuintek, following up or making a new request.\n- project_update — the email explicitly references an existing lead_id or project_id and asks to create or update a project (e.g. confirms scope, provides a project name, or reports project status).\n- support — a general question with no clear buying intent.\n- spam — promotional, newsletter, automated, or unrelated to Tuintek's business.\n- complaint — expresses dissatisfaction with a product, service, or past interaction.\n\n# Step 2 — Extract data\nFrom the email, extract whatever of these is present: first_name, last_name, email, phone, company, lead_id, contact_id, project_id, project name/title, and a one-line summary of what they want.\n\n# Step 3 — Act\n- new_lead: call Create Contact with the extracted fields (type = prospect). Then call Create Lead using the returned contact_id, with a short, business-facing title.\n- existing_customer: only call Create Lead or Update Lead Status if you can identify a real existing contact_id or lead_id from context. If you cannot, reclassify as new_lead instead of guessing an ID.\n- project_update: only call Create Project if the email provides a valid lead_id AND contact_id AND a project name/title. Only call Update Project Status if the email provides a valid project_id. If any required ID is missing, do not call any tool — reclassify as support instead and explain what's missing in message.\n- support, spam, complaint: do not call any tool.\n\n# Hard constraints\n- Never invent or guess an ID. Only use an ID extracted from context or returned from a tool call in this same run.\n- If required fields (name, email) are missing for new_lead, do not call the tool — set decision to support and explain why in message.\n- When uncertain between two decisions, choose the one that does NOT call a tool.\n- Keep message to one or two sentences, written for a human reading a routing dashboard, not a copy of the email.\n\n# Output format\nRespond with valid JSON only, no extra text before or after it:\n{\n  \"decision\": \"new_lead\" | \"existing_customer\" | \"project_update\" | \"support\" | \"spam\" | \"complaint\",\n  \"message\": \"one or two sentences describing the situation and what was done, written as the actual notification/reply text for this case\",\n  \"action_taken\": \"tool call made, or none\",\n  \"data\": {\n    \"first_name\": \"\",\n    \"last_name\": \"\",\n    \"email\": \"\",\n    \"phone\": \"\",\n    \"company\": \"\",\n    \"contact_id\": \"\",\n    \"lead_id\": \"\",\n    \"project_id\": \"\",\n    \"title\": \"\"\n  }\n}\nLeave any field in \"data\" empty (\"\") if it was not present in the email or not created/returned during this run.\n\n# Decision constraint\nThe \"decision\" field must be exactly one of these six lowercase strings, with no variation: new_lead, existing_customer, project_update, support, spam, complaint. Do not use any other wording, capitalization, or spacing."
+        }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
@@ -52,8 +54,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
       "position": [
-        48,
-        32
+        -32,
+        64
       ],
       "id": "567816d3-4ef7-4d05-b985-1d4520927213",
       "name": "Google Gemini Chat Model",
@@ -66,7 +68,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const raw = $input.first().json.output || $input.first().json.text;\nconst cleaned = raw.replace(/```json|```/g, '').trim();\nconst parsed = JSON.parse(cleaned);\nreturn [{ json: parsed }];"
+        "jsCode": "const text = $input.first().json.output || $input.first().json.text;\nconst match = text.match(/\\{[\\s\\S]*\\}/);\nconst parsed = JSON.parse(match[0]);\nreturn [{\n  json: {\n    decision: parsed.decision,\n    message: parsed.message,\n    action_taken: parsed.action_taken,\n    first_name: parsed.data?.first_name || '',\n    last_name: parsed.data?.last_name || '',\n    email: parsed.data?.email || '',\n    phone: parsed.data?.phone || '',\n    company: parsed.data?.company || '',\n    contact_id: parsed.data?.contact_id || '',\n    lead_id: parsed.data?.lead_id || '',\n    project_id: parsed.data?.project_id || '',\n    title: parsed.data?.title || ''\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -79,84 +81,17 @@
     },
     {
       "parameters": {
-        "operation": "createContact",
-        "firstName": "={{ $json.first_name }}",
-        "lastName": "={{ $json.last_name }}",
-        "email": "={{ $json.email }}",
-        "phone": "=",
-        "company": "={{ $json.company }}"
-      },
-      "type": "n8n-nodes-tuintek-crm.tuintekCrm",
-      "typeVersion": 1,
-      "position": [
-        912,
-        -224
-      ],
-      "id": "29f672bb-25ad-4b17-ae20-3158599ce127",
-      "name": "Tuintek CRM",
-      "credentials": {
-        "tuintekCrmApi": {
-          "id": "2VPldviKfH3boFPA",
-          "name": "Tuintek CRM account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "170031bf-d414-4cfb-8737-ee3d75aa1c01",
-              "leftValue": "= {{ $json.email }} ",
-              "rightValue": "= Not Empty",
-              "operator": {
-                "type": "string",
-                "operation": "notEmpty",
-                "singleValue": true
-              }
-            },
-            {
-              "id": "e6b6338a-aea8-471e-a7d1-cfdbd069966e",
-              "leftValue": "= {{ $json.email }} ",
-              "rightValue": "=.+@.+\\..+",
-              "operator": {
-                "type": "string",
-                "operation": "regex"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        624,
-        -160
-      ],
-      "id": "2b428b55-a39d-47a1-a031-f22756ee6417",
-      "name": "If"
-    },
-    {
-      "parameters": {
-        "sendTo": "={{ $('Gmail Trigger').item.json.From }}",
-        "subject": "Your information was added successfully",
+        "sendTo": "={{$node[\"Gmail Trigger\"].json.From}}",
+        "subject": "=Re: {{$node[\"Gmail Trigger\"].json.Subject}}",
         "emailType": "text",
-        "message": "=Hi {{ $json.first_name }},  Thank you for reaching out. Your information has been received and added to our system successfully.  Name: {{ $json.first_name }} {{ $json.last_name }} Company: {{ $json.company }}  We will be in touch soon.  Best regards, Tuintek Team",
+        "message": "={{$node[\"Code in JavaScript\"].json.message}}",
         "options": {}
       },
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.2,
       "position": [
-        1072,
-        -224
+        1328,
+        -320
       ],
       "id": "1912f6a7-ad0e-4cde-803f-b7f877fa2a28",
       "name": "Send a message",
@@ -170,21 +105,317 @@
     },
     {
       "parameters": {
-        "sendTo": "={{ $('Gmail Trigger').item.json.From }}",
-        "subject": "We need more information from you",
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.decision}}",
+                    "rightValue": "=new_lead",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "717808a9-3917-4076-848e-d174addec88e"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "41cefa58-c1e6-408c-a651-7b83c556595e",
+                    "leftValue": "={{$json.decision}}",
+                    "rightValue": "=project_update",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "d98f7c85-db08-4eee-a5cc-d08e26a587f1",
+                    "leftValue": "={{$json.decision}}",
+                    "rightValue": "support",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "2beb41ac-61c1-4f79-bd21-f2a0d4986610",
+                    "leftValue": "={{$json.decision}}",
+                    "rightValue": "spam",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "6e3d9c3c-0bbf-4d10-a995-41bf83668a7b",
+                    "leftValue": "={{$json.decision}}",
+                    "rightValue": "complaint",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "dfdc65c2-c81b-4acd-8718-fca10399a2cf",
+                    "leftValue": "={{$json.decision}}",
+                    "rightValue": "existing_customer",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": 2
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        656,
+        -112
+      ],
+      "id": "d6708844-24d5-4533-8086-401882f95d8a",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "operation": "createContact",
+        "firstName": "={{$json.first_name}}",
+        "lastName": "={{$json.last_name}}",
+        "email": "={{$json.email}}",
+        "phone": "={{$json.phone}}",
+        "company": "={{$json.company}}",
+        "ownerId": 1
+      },
+      "type": "n8n-nodes-tuintek-crm.tuintekCrm",
+      "typeVersion": 1,
+      "position": [
+        1072,
+        -384
+      ],
+      "id": "0059d0b4-5d09-45af-b44f-5940bf096611",
+      "name": "Tuintek CRM1",
+      "credentials": {
+        "tuintekCrmApi": {
+          "id": "2VPldviKfH3boFPA",
+          "name": "Tuintek CRM account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "createProject",
+        "projectLeadId": "={{$json.lead_id}}",
+        "projectContactId": "=1",
+        "projectName": "={{$json.title}}",
+        "projectOwnerId": "=1"
+      },
+      "type": "n8n-nodes-tuintek-crm.tuintekCrm",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        -208
+      ],
+      "id": "ff78d354-f410-470b-9f72-36ce0fa40111",
+      "name": "Tuintek CRM",
+      "credentials": {
+        "tuintekCrmApi": {
+          "id": "2VPldviKfH3boFPA",
+          "name": "Tuintek CRM account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{$node[\"Gmail Trigger\"].json.From}}",
+        "subject": "=Support inquiry — needs review",
         "emailType": "text",
-        "message": "=Hi {{ $json.first_name }},  We received your message, but some information was missing or incorrect (such as your email address), so we could not process it.  Could you please reply with the correct details?  Best regards, Tuintek Team",
+        "message": "={{$json.message}}",
         "options": {}
       },
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.2,
       "position": [
-        1024,
-        -32
+        1328,
+        -128
       ],
-      "id": "7c24bede-e49d-4cd3-8dce-42e4e5c7ce49",
+      "id": "196a0a55-3a20-4873-bffb-ccb6be08e003",
       "name": "Send a message1",
-      "webhookId": "cf3e980f-e627-412c-9be7-f0a31517b3ae",
+      "webhookId": "0cd31d6a-4ea5-4697-86f2-43a7c4596fc6",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9NLcVHKd4PcHueQa",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{$node[\"Gmail Trigger\"].json.From}}",
+        "subject": "=⚠️ Complaint received — needs attention",
+        "emailType": "text",
+        "message": "={{$json.message}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1360,
+        0
+      ],
+      "id": "91e062b9-f19d-4772-b553-4cf41d49f367",
+      "name": "Send a message2",
+      "webhookId": "0cd31d6a-4ea5-4697-86f2-43a7c4596fc6",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9NLcVHKd4PcHueQa",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "contactId": "={{$json.contact_id}}",
+        "title": "={{$json.title}}"
+      },
+      "type": "n8n-nodes-tuintek-crm.tuintekCrm",
+      "typeVersion": 1,
+      "position": [
+        1232,
+        176
+      ],
+      "id": "6844860a-f68b-412e-9d79-b4403b0b799d",
+      "name": "Tuintek CRM2",
+      "credentials": {
+        "tuintekCrmApi": {
+          "id": "2VPldviKfH3boFPA",
+          "name": "Tuintek CRM account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{$node[\"Gmail Trigger\"].json.From}}",
+        "subject": "=new leads created",
+        "emailType": "text",
+        "message": "={{$json.message}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1520,
+        176
+      ],
+      "id": "19577d56-88a8-4e85-a539-619595ca97ed",
+      "name": "Send a message3",
+      "webhookId": "0cd31d6a-4ea5-4697-86f2-43a7c4596fc6",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9NLcVHKd4PcHueQa",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{$node[\"Gmail Trigger\"].json.From}}",
+        "subject": "=new project added",
+        "emailType": "text",
+        "message": "={{$json.message}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1632,
+        -176
+      ],
+      "id": "13a17db5-113b-4b1e-a267-d612fd95a422",
+      "name": "Send a message4",
+      "webhookId": "0cd31d6a-4ea5-4697-86f2-43a7c4596fc6",
       "credentials": {
         "gmailOAuth2": {
           "id": "9NLcVHKd4PcHueQa",
@@ -232,15 +463,22 @@
       "main": [
         [
           {
-            "node": "If",
+            "node": "Switch",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "If": {
+    "Switch": {
       "main": [
+        [
+          {
+            "node": "Tuintek CRM1",
+            "type": "main",
+            "index": 0
+          }
+        ],
         [
           {
             "node": "Tuintek CRM",
@@ -254,6 +492,43 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [],
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Tuintek CRM2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tuintek CRM1": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tuintek CRM2": {
+      "main": [
+        [
+          {
+            "node": "Send a message3",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -261,7 +536,7 @@
       "main": [
         [
           {
-            "node": "Send a message",
+            "node": "Send a message4",
             "type": "main",
             "index": 0
           }
@@ -275,7 +550,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "1ddc5652-c2a3-48ff-b3f0-19602a5247df",
+  "versionId": "9a8c5a37-73ba-4eba-af01-1103e6534cf3",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "161e7c8ad82b7e9dadac1708bfa6e02b2d9266cbf17d61ef7690ddac403ed5e5"
