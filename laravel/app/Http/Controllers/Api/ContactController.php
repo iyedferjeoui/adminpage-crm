@@ -9,9 +9,24 @@ use Illuminate\Http\Request;
 
 class ContactController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return ContactResource::collection(Contact::all());
+        $query = Contact::query();
+
+        if ($search = $request->query('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('company', 'like', "%{$search}%");
+            });
+        }
+
+        if ($type = $request->query('type')) {
+            $query->where('type', $type);
+        }
+
+        return ContactResource::collection($query->get());
     }
 
     public function store(Request $request)

@@ -9,9 +9,23 @@ use Illuminate\Http\Request;
 
 class ProjectController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return ProjectResource::collection(Project::all());
+        $query = Project::query();
+
+        if ($contactId = $request->query('contact_id')) {
+            $query->where('contact_id', $contactId);
+        }
+
+        if ($leadId = $request->query('lead_id')) {
+            $query->where('lead_id', $leadId);
+        }
+
+        if ($status = $request->query('status')) {
+            $query->where('status', $status);
+        }
+
+        return ProjectResource::collection($query->get());
     }
 
     public function store(Request $request)
