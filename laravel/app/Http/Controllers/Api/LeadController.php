@@ -9,9 +9,19 @@ use Illuminate\Http\Request;
 
 class LeadController extends Controller
 {
-    public function index()
+public function index(Request $request)
     {
-        return LeadResource::collection(Lead::all());
+        $query = Lead::query();
+
+        if ($contactId = $request->query('contact_id')) {
+            $query->where('contact_id', $contactId);
+        }
+
+        if ($status = $request->query('status')) {
+            $query->where('status', $status);
+        }
+
+        return LeadResource::collection($query->get());
     }
 
     public function store(Request $request)
