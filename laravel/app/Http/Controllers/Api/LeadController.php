@@ -9,11 +9,7 @@ use Illuminate\Http\Request;
 
 class LeadController extends Controller
 {
-<<<<<<< HEAD
-public function index(Request $request)
-=======
     public function index(Request $request)
->>>>>>> 801ca82 (Add Tuintek MCP server and CRM tools)
     {
         $query = Lead::query();
 
@@ -27,7 +23,6 @@ public function index(Request $request)
 
         return LeadResource::collection($query->get());
     }
-
 
     public function store(Request $request)
     {
