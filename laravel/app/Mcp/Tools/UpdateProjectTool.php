@@ -24,24 +24,19 @@ class UpdateProjectTool extends Tool
                 ->required(),
 
             'name' => $schema->string()
-                ->description('New project name.')
-                ->nullable(),
+                ->description('New project name.'),
 
             'description' => $schema->string()
-                ->description('New project description.')
-                ->nullable(),
+                ->description('New project description.'),
 
             'status' => $schema->string()
-                ->description('New project status.')
-                ->nullable(),
+                ->description('New project status.'),
 
             'lead_id' => $schema->integer()
-                ->description('New lead ID.')
-                ->nullable(),
+                ->description('New lead ID.'),
 
             'contact_id' => $schema->integer()
-                ->description('New contact ID.')
-                ->nullable(),
+                ->description('New contact ID.'),
         ];
     }
 
