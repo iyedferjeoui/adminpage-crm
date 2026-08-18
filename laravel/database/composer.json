@@ -6,15 +6,14 @@
     "keywords": ["laravel", "framework"],
     "license": "MIT",
  "require": {
-        "php": "^8.4",
-        "ext-intl": "*",
-        "ext-zip": "*",
-        "filament/filament": "^5.7",
-        "laravel/framework": "^13.8",
-        "laravel/mcp": "^0.9.4",
-        "laravel/sanctum": "^4.0",
-        "laravel/tinker": "^3.0"
-    },
+    "php": "^8.4",
+    "ext-intl": "*",
+    "ext-zip": "*",
+    "filament/filament": "^5.7",
+    "laravel/framework": "^13.8",
+    "laravel/sanctum": "^4.0",
+    "laravel/tinker": "^3.0"
+},
     "require-dev": {
         "fakerphp/faker": "^1.23",
         "laravel/pail": "^1.2.5",

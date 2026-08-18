@@ -22,18 +22,12 @@ class ContactController extends Controller
             });
         }
 
-        if ($email = $request->query('email')) {
-            $query->where('email', $email);
-        }
-
         if ($type = $request->query('type')) {
             $query->where('type', $type);
         }
 
         return ContactResource::collection($query->get());
-    }    
-
-
+    }
 
     public function store(Request $request)
     {
