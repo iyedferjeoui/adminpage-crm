@@ -24,16 +24,13 @@ class UpdateLeadTool extends Tool
                 ->required(),
 
             'name' => $schema->string()
-                ->description('New lead name.')
-                ->nullable(),
+                ->description('New lead name.'),
 
             'status' => $schema->string()
-                ->description('New lead status.')
-                ->nullable(),
+                ->description('New lead status.'),
 
             'contact_id' => $schema->integer()
-                ->description('New contact ID.')
-                ->nullable(),
+                ->description('New contact ID.'),
         ];
     }
 
