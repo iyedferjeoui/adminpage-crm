@@ -22,20 +22,16 @@ class FindLeadTool extends Tool
     {
         return [
             'lead_id' => $schema->integer()
-                ->description('Exact lead ID.')
-                ->nullable(),
+                ->description('Exact lead ID.'),
 
             'search' => $schema->string()
-                ->description('Search by lead name or relevant text.')
-                ->nullable(),
+                ->description('Search by lead name or relevant text.'),
 
             'status' => $schema->string()
-                ->description('Filter by lead status.')
-                ->nullable(),
+                ->description('Filter by lead status.'),
 
             'contact_id' => $schema->integer()
-                ->description('Filter leads belonging to a contact.')
-                ->nullable(),
+                ->description('Filter leads belonging to a contact.'),
         ];
     }
 
