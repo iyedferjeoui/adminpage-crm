@@ -24,20 +24,17 @@ class CreateProjectTool extends Tool
                 ->required(),
 
             'description' => $schema->string()
-                ->description('Project description.')
-                ->nullable(),
+                ->description('Project description.'),
 
             'status' => $schema->string()
                 ->description('Project status.')
                 ->default('new'),
 
             'lead_id' => $schema->integer()
-                ->description('ID of the lead associated with this project.')
-                ->nullable(),
+                ->description('ID of the lead associated with this project.'),
 
             'contact_id' => $schema->integer()
-                ->description('ID of the contact associated with this project.')
-                ->nullable(),
+                ->description('ID of the contact associated with this project.'),
         ];
     }
 
