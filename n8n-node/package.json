@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-tuintek-crm",
-  "version": "1.0.4",
+  "version": "1.0.6",
   "description": "n8n community node for Tuintek CRM, create and manage leads, contacts, and projects",
   "keywords": [
     "n8n-community-node-package"
