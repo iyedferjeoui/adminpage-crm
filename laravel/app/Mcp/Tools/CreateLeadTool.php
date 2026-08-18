@@ -28,8 +28,7 @@ class CreateLeadTool extends Tool
                 ->default('new'),
 
             'contact_id' => $schema->integer()
-                ->description('Contact associated with the lead.')
-                ->nullable(),
+                ->description('Contact associated with the lead.'),
         ];
     }
 
