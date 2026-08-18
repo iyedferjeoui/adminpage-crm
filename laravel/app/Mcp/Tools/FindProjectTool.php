@@ -22,24 +22,19 @@ class FindProjectTool extends Tool
     {
         return [
             'project_id' => $schema->integer()
-                ->description('The exact project ID.')
-                ->nullable(),
+                ->description('The exact project ID.'),
 
             'search' => $schema->string()
-                ->description('Search project name or description.')
-                ->nullable(),
+                ->description('Search project name or description.'),
 
             'status' => $schema->string()
-                ->description('Filter by project status.')
-                ->nullable(),
+                ->description('Filter by project status.'),
 
             'lead_id' => $schema->integer()
-                ->description('Filter projects belonging to a lead.')
-                ->nullable(),
+                ->description('Filter projects belonging to a lead.'),
 
             'contact_id' => $schema->integer()
-                ->description('Filter projects belonging to a contact.')
-                ->nullable(),
+                ->description('Filter projects belonging to a contact.'),
         ];
     }
 
