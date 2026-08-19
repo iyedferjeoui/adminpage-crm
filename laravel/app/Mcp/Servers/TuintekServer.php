@@ -2,10 +2,13 @@
 
 namespace App\Mcp\Servers;
 
+use App\Mcp\Tools\CreateContactTool;
 use App\Mcp\Tools\CreateLeadTool;
 use App\Mcp\Tools\CreateProjectTool;
+use App\Mcp\Tools\FindContactTool;
 use App\Mcp\Tools\FindLeadTool;
 use App\Mcp\Tools\FindProjectTool;
+use App\Mcp\Tools\UpdateContactTool;
 use App\Mcp\Tools\UpdateLeadTool;
 use App\Mcp\Tools\UpdateProjectTool;
 use Laravel\Mcp\Server;
@@ -16,9 +19,11 @@ class TuintekServer extends Server
         FindProjectTool::class,
         CreateProjectTool::class,
         UpdateProjectTool::class,
-
         FindLeadTool::class,
         CreateLeadTool::class,
         UpdateLeadTool::class,
+        FindContactTool::class,
+        CreateContactTool::class,
+        UpdateContactTool::class,
     ];
 }
