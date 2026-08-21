@@ -13,7 +13,9 @@ return [
     | a conventional file to locate the various service credentials.
     |
     */
-
+    'n8n' => [
+      'chat_webhook' => env('N8N_CHAT_WEBHOOK_URL'),
+    ],
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],
