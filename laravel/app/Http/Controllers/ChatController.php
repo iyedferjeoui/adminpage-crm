@@ -21,7 +21,7 @@ class ChatController extends Controller
 
         $user = $request->user();
 
-        $response = Http::timeout(30)
+        $response = Http::timeout(60)
             ->withHeaders(['ngrok-skip-browser-warning' => 'true'])
             ->post(config('services.n8n.chat_webhook'), [
                 'chatInput' => $validated['message'],
